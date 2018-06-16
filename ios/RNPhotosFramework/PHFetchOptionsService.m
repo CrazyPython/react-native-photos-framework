@@ -141,7 +141,7 @@
     if(olderThan != nil) {
         timestamp = [f numberFromString:olderThan];
     } else {
-        timestamp = [f numberFromString:newerThan]
+        timestamp = [f numberFromString:newerThan];
     }
     if(timestamp == nil) {
         return nil;
