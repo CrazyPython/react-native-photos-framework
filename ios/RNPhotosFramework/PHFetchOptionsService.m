@@ -129,13 +129,20 @@
 }
 
 +(NSPredicate *) getCreationDatePredicate:(NSDictionary *)params {
+    // library doesn't yet support newerThan and olderThan at the same time, olderThan takes priority
     NSString * olderThan = [RCTConvert NSString:params[@"olderThan"]];
-    if(olderThan == nil) {
+    NSString * newerThan = [RCTConvert NSString:params[@"newerThan"]];
+    if(olderThan == nil && newerThan == nil) {
         return nil;
     }
     NSNumberFormatter *f = [[NSNumberFormatter alloc] init];
     f.numberStyle = NSNumberFormatterDecimalStyle;
-    NSNumber * timestamp = [f numberFromString:olderThan];
+    NSNumber * timestamp;
+    if(olderThan != nil) {
+        timestamp = [f numberFromString:olderThan];
+    } else {
+        timestamp = [f numberFromString:newerThan]
+    }
     if(timestamp == nil) {
         return nil;
     }
@@ -143,7 +150,11 @@
     if(date == nil) {
         return nil;
     }
-    return [NSPredicate predicateWithFormat:@"creationDate < %@", date];
+    if(olderThan != nil) {
+        return [NSPredicate predicateWithFormat:@"creationDate < %@", date];
+    } else {
+        return [NSPredicate predicateWithFormat:@"creationDate > %@", date];
+    }
 }
 
 
