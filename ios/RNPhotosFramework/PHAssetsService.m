@@ -103,8 +103,13 @@
 }
 
 +(NSMutableDictionary *)extendAssetDictWithAssetMetadata:(NSMutableDictionary *)dictToExtend andPHAsset:(PHAsset *)asset {
-
-    [dictToExtend setObject:@([RNPFHelpers getTimeSince1970:[asset creationDate]]) forKey:@"creationDateUTCSeconds"];
+    int64_t creationDateUTCMilliseconds = [[asset creationDate] timeIntervalSince1970] * 1000;
+    /*
+     Present Policy: Don't store private variables as extra identifying information for fear of Apple detection
+     NSString *guid = [asset valueForKey:@"cloudAssetGUID"];
+     NSString *filename = [asset valueForKey:@"filename"];
+    */
+    [dictToExtend setObject:@(creationDateUTCMilliseconds) forKey:@"creationDateUTCMilliseconds"];
     [dictToExtend setObject:@([RNPFHelpers getTimeSince1970:[asset modificationDate]])forKey:@"modificationDateUTCSeconds"];
     [dictToExtend setObject:[RNPFHelpers CLLocationToJson:[asset location]] forKey:@"location"];
     [dictToExtend setObject:[RNPFHelpers nsOptionsToArray:[asset mediaSubtypes] andBitSize:32 andReversedEnumDict:[RCTConvert PHAssetMediaSubtypeValuesReversed]] forKey:@"mediaSubTypes"];
