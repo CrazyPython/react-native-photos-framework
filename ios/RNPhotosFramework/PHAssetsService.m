@@ -41,9 +41,13 @@
 +(PHFetchResult<PHAsset *> *)getAssetsForParams:(NSDictionary *)params andAlbumLocalIdentifier:(NSString *)albumLocalIdentifier {
     PHFetchOptions *options = [PHFetchOptionsService getAssetFetchOptionsFromParams:params];
     PHFetchResult<PHAssetCollection *> *collections = [PHAssetCollection fetchAssetCollectionsWithLocalIdentifiers:@[albumLocalIdentifier] options:nil];
-
-    PHFetchResult<PHAsset *> * assets = [PHAsset fetchAssetsInAssetCollection:collections.firstObject options:options];
-    return assets;
+    
+    if(collections.firstObject == nil) {
+        return nil;
+    } else {
+        PHFetchResult<PHAsset *> * assets = [PHAsset fetchAssetsInAssetCollection:collections.firstObject options:options];
+        return assets;
+    }
 }
 
 +(PHFetchResult<PHAsset *> *) getAssetsFromArrayOfLocalIdentifiers:(NSArray<NSString *> *)arrayWithLocalIdentifiers {
@@ -102,6 +106,14 @@
     return uriArray;
 }
 
++(NSMutableArray *)convertAssetCollectionFetchResultToJSArray:(PHFetchResult *)albums {
+    NSMutableArray *albumsToReturn = [NSMutableArray array];
+    for(PHAssetCollection *album in albums) {
+        [albumsToReturn addObject: [[NSDictionary alloc] initWithObjectsAndKeys:album.localizedTitle, @"localizedTitle", album.localIdentifier, @"localIdentifier", nil]];
+    }
+    return albumsToReturn;
+}
+
 +(NSMutableDictionary *)extendAssetDictWithAssetMetadata:(NSMutableDictionary *)dictToExtend andPHAsset:(PHAsset *)asset {
     int64_t creationDateUTCMilliseconds = [[asset creationDate] timeIntervalSince1970] * 1000;
     /*
@@ -126,17 +138,14 @@
         [dictToExtend setObject:[RNPFHelpers nsOptionsToArray:[asset burstSelectionTypes] andBitSize:32 andReversedEnumDict:[RCTConvert PHAssetBurstSelectionTypeValuesReversed]] forKey:@"burstSelectionTypes"];
     }
 
-    NSMutableArray *albumNames = [NSMutableArray array];
     PHFetchResult *albums = [PHAssetCollection fetchAssetCollectionsContainingAsset:asset withType:PHAssetCollectionTypeAlbum options:nil];
-    for(PHCollection *album in albums) {
-        [albumNames addObject: album.localizedTitle];
-    }
+    NSMutableArray *albumsToReturn = [self convertAssetCollectionFetchResultToJSArray:albums];
     PHFetchResult *smartAlbums = [PHAssetCollection fetchAssetCollectionsContainingAsset:asset withType:PHAssetCollectionTypeSmartAlbum options:nil];
     for(PHCollection *album in smartAlbums) {
-        [albumNames addObject: album.localizedTitle];
+        [albumsToReturn addObject: album.localizedTitle];
     }
-    [dictToExtend setObject:albumNames forKey:@"inAlbums"];
-
+    [dictToExtend setObject:albumsToReturn forKey:@"inAlbums"];
+    
     return dictToExtend;
 }
 
